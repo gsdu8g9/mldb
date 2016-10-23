@@ -1090,7 +1090,8 @@ struct TabularDataset::TabularDataStore: public ColumnIndex, public MatrixView {
         {
             if (!chunk || chunk->rowCount() == 0)
                 return;
-            auto frozen = chunk->freeze();
+            ColumnFreezeParameters params;
+            auto frozen = chunk->freeze(params);
             store->addFrozenChunk(std::move(frozen));
         }
 
@@ -1228,10 +1229,11 @@ struct TabularDataset::TabularDataStore: public ColumnIndex, public MatrixView {
         if (chunk->rowCount() == 0)
             return;
 
+        ColumnFreezeParameters params;
         auto job = [=] ()
             {
                 Scope_Exit(--this->backgroundJobsActive);
-                auto frozen = chunk->freeze();
+                auto frozen = chunk->freeze(params);
                 addFrozenChunk(std::move(frozen));
             };
         
