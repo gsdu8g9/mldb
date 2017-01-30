@@ -96,6 +96,9 @@ ImportTextConfigDescription::ImportTextConfigDescription()
             "Regex used to skip lines");
     addAuto("ignoreExtraColumns", &ImportTextConfig::ignoreExtraColumns,
             "Ignore extra columns that weren't in header");
+    addAuto("processExcelFormulas", &ImportTextConfig::processExcelFormulas,
+            "Process formulas in `=\"...\"` format from Excel export of "
+            "CSV");
 
     addParent<ProcedureConfig>();
     onUnknownField = [] (ImportTextConfig * config,
@@ -437,7 +440,8 @@ parseFixedWidthCsvRow(const char * & line,
                       bool isTextLine,
                       bool hasQuoteChar,
                       const shared_ptr<spdlog::logger> & logger,
-                      bool ignoreExtraColumns)
+                      bool ignoreExtraColumns,
+                      bool processExcelFormulas)
 {
     ExcAssert(!(hasQuoteChar && isTextLine));
 
@@ -515,15 +519,20 @@ parseFixedWidthCsvRow(const char * & line,
 
         const char * start = line;
 
-        char c = *line++;
+        const char c = *line++;
 
         if (c == separator && !isTextLine) {
             // null field
             ++colNum;
             continue;
         }
-        else if (c == quote && hasQuoteChar) {
-            // quoted string
+        else if (hasQuoteChar
+                 && (c == quote
+                     || (processExcelFormulas
+                         && c == '='
+                         && length > 1
+                         && line[0] == quote && (++line || true/* side effect */)))) {
+            // quoted string, or ="..." (excel formula style)
             static constexpr size_t FIXED_BUF_LEN = 4096;
             char sbuf[FIXED_BUF_LEN];  // holds the extracted string
             char * s = sbuf;
@@ -551,7 +560,7 @@ parseFixedWidthCsvRow(const char * & line,
                 };
 
             for (; line < lineEnd;  ++line) {
-                c = *line;
+                const char c = *line;
                 if (c == quote) {
                     ++line;
                     if (line >= lineEnd) {
@@ -600,7 +609,7 @@ parseFixedWidthCsvRow(const char * & line,
 
             for (; line < lineEnd;  ++line, ++len) {
                 ExcAssert(line < lineEnd);
-                c = *line;
+                const char c = *line;
                 if (c == separator) {
                     ++line;
                     break;
@@ -634,7 +643,7 @@ parseFixedWidthCsvRow(const char * & line,
             size_t len = 1;
 
             for (; line < lineEnd;  ++line, ++len) {
-                c = *line;
+                const char c = *line;
                 if (c == separator && !isTextLine) {
                     ++line;
                     break;
@@ -1066,7 +1075,8 @@ struct ImportTextProcedureWorkInstance
                                             replaceInvalidCharactersWith,
                                             isTextLine,
                                             hasQuoteChar, logger,
-                                            config.ignoreExtraColumns);
+                                            config.ignoreExtraColumns,
+                                            config.processExcelFormulas);
 
                 if (errorMsg) {
                     if(config.allowMultiLines) {
