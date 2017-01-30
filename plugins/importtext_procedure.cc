@@ -452,12 +452,6 @@ parseFixedWidthCsvRow(const char * & line,
     auto finishString = [encoding,replaceInvalidCharactersWith,&logger]
         (const char * start, size_t len, bool eightBit)
         {
-            TRACE_MSG(logger)
-                 << "finishing string " << string(start, len)
-                 << " with eightBit " << eightBit
-                 << " encoding " << encoding
-                 << " replaceInvalidCharactersWith " << replaceInvalidCharactersWith;
-
             if (!eightBit) {
                 char buf[len];
                 if (replaceInvalidCharactersWith >= 0) {
@@ -990,8 +984,6 @@ struct ImportTextProcedureWorkInstance
 
         auto startChunk = [&] (int64_t chunkNumber, size_t lineNumber)
             {
-                DEBUG_MSG(logger)
-                    << "started chunk " << chunkNumber << " at line " << lineNumber;
                 auto & threadAccum = accum.get();
                 threadAccum.threadRecorder = recorder.newChunk(chunkNumber);
                 if (isIdentitySelect)
@@ -1003,7 +995,6 @@ struct ImportTextProcedureWorkInstance
 
         auto doneChunk = [&] (int64_t chunkNumber, size_t lineNumber)
             {
-                DEBUG_MSG(logger) << "finished chunk " << chunkNumber;
                 auto & threadAccum = accum.get();
                 ExcAssert(threadAccum.threadRecorder.get());
                 threadAccum.threadRecorder->finishedChunk();
