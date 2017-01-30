@@ -94,6 +94,8 @@ ImportTextConfigDescription::ImportTextConfigDescription()
              false);
     addAuto("skipLineRegex", &ImportTextConfig::skipLineRegex,
             "Regex used to skip lines");
+    addAuto("ignoreExtraColumns", &ImportTextConfig::ignoreExtraColumns,
+            "Ignore extra columns that weren't in header");
 
     addParent<ProcedureConfig>();
     onUnknownField = [] (ImportTextConfig * config,
@@ -434,7 +436,8 @@ parseFixedWidthCsvRow(const char * & line,
                       int replaceInvalidCharactersWith,
                       bool isTextLine,
                       bool hasQuoteChar,
-                      shared_ptr<spdlog::logger> & logger)
+                      const shared_ptr<spdlog::logger> & logger,
+                      bool ignoreExtraColumns)
 {
     ExcAssert(!(hasQuoteChar && isTextLine));
 
@@ -504,8 +507,11 @@ parseFixedWidthCsvRow(const char * & line,
             break;
         }
 
-        if (colNum >= numColumns)
+        if (colNum >= numColumns) {
+            if (ignoreExtraColumns)
+                break;
             return "too many columns in row";
+        }
 
         const char * start = line;
 
@@ -644,7 +650,7 @@ parseFixedWidthCsvRow(const char * & line,
     if (errorMsg)
         return errorMsg;
 
-    if (line < lineEnd) {
+    if (line < lineEnd && !ignoreExtraColumns) {
         return "too many columns in row";
     }
 
@@ -1059,7 +1065,8 @@ struct ImportTextProcedureWorkInstance
                                             separator, quote, encoding,
                                             replaceInvalidCharactersWith,
                                             isTextLine,
-                                            hasQuoteChar, logger);
+                                            hasQuoteChar, logger,
+                                            config.ignoreExtraColumns);
 
                 if (errorMsg) {
                     if(config.allowMultiLines) {

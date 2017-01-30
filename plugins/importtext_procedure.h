@@ -50,6 +50,7 @@ struct ImportTextConfig : public ProcedureConfig  {
     PolyConfigT<Dataset> output;
 
     Regex skipLineRegex;
+    bool ignoreExtraColumns = false;
 };
 
 DECLARE_STRUCTURE_DESCRIPTION(ImportTextConfig);
