@@ -15,7 +15,7 @@
 #include "mldb/core/function.h"
 #include "mldb/ml/value_descriptions.h"
 #include "mldb/types/optional.h"
-
+#include "mldb/types/regex.h"
 
 namespace MLDB {
 
@@ -63,6 +63,7 @@ struct ImportTextConfig : public ProcedureConfig  {
 
     PolyConfigT<Dataset> output;
 
+    Regex skipLineRegex;
 };
 
 DECLARE_STRUCTURE_DESCRIPTION(ImportTextConfig);

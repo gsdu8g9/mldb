@@ -92,6 +92,13 @@ ImportTextConfigDescription::ImportTextConfigDescription()
              "If true, the indexes of the columns will be used to name them."
              "This cannot be set to true if headers is defined.",
              false);
+    addAuto("skipLineRegex", &ImportTextConfig::skipLineRegex,
+            "Regex used to skip lines.  This regex must match the entire line, in "
+            "other words it is automatically anchored at the beginning and the "
+            "end of the line, so `#.*` will skip lines that have a `#` in the "
+            "first character position.  Default skips no lines.  This option applies "
+            "to the text, not to the CSV rows, and so may interact strangely with the "
+            "`allowMultiLines` option.");
 
     addParent<ProcedureConfig>();
     onUnknownField = [] (ImportTextConfig * config,
@@ -431,7 +438,7 @@ parseFixedWidthCsvRow(const char * & line,
                       int replaceInvalidCharactersWith,
                       bool isTextLine,
                       bool hasQuoteChar,
-                      shared_ptr<spdlog::logger> & logger)
+                      const shared_ptr<spdlog::logger> & logger)
 {
     ExcAssert(!(hasQuoteChar && isTextLine));
 
@@ -507,8 +514,9 @@ parseFixedWidthCsvRow(const char * & line,
             break;
         }
 
-        if (colNum >= numColumns)
+        if (colNum >= numColumns) {
             return "too many columns in row";
+        }
 
         const char * start = line;
 
