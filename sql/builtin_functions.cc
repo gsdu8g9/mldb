@@ -534,7 +534,7 @@ struct RegisterBuiltinBinaryScalar {
     {
         auto resultInfo
             = std::make_shared<EmbeddingValueInfo>
-            (args[0].info->getEmbeddingShape(),
+            (args[1].info->getEmbeddingShape(),
              info->getEmbeddingType());
         return wrap(functionName, fn, std::move(resultInfo),
                     applyScalarEmbedding);
@@ -549,8 +549,9 @@ struct RegisterBuiltinBinaryScalar {
     {
         auto resultInfo
             = std::make_shared<EmbeddingValueInfo>
-            (args[1].info->getEmbeddingShape(),
+            (args[0].info->getEmbeddingShape(),
              info->getEmbeddingType());
+
         return wrap(functionName, fn, std::move(resultInfo),
                     applyEmbeddingScalar);
     }
